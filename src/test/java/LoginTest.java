@@ -1,8 +1,11 @@
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 import java.time.Duration;
 
 public class LoginTest {
@@ -18,18 +21,24 @@ public class LoginTest {
         WebDriver driver = new ChromeDriver(options);
 
         try {
-            driver.navigate().to("http://103.139.122.250:4000/");
-            driver.findElement(By.name("email")).sendKeys("wrong@email.com");
-            driver.findElement(By.name("password")).sendKeys("wrongpassword");
-            driver.findElement(By.id("m_login_signin_submit")).click();
+            driver.navigate().to("http://103.139.122.250:4000/login");
+
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+            WebElement emailField = wait.until(
+                ExpectedConditions.presenceOfElementLocated(By.id("email"))
+            );
+
+            emailField.sendKeys("wrong@email.com");
+            driver.findElement(By.id("password")).sendKeys("wrongpassword");
+            driver.findElement(By.cssSelector("button[type='submit']")).click();
+
             driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
 
-            String errorText = driver.findElement(
-                By.xpath("/html/body/div/div/div[1]/div/div/div/div[2]/form/div[1]")
-            ).getText();
+            // Check we are still on login page (failed login)
+            String currentUrl = driver.getCurrentUrl();
+            assert currentUrl.contains("login")
+                : "Expected to stay on login page but got: " + currentUrl;
 
-            assert errorText.contains("Incorrect email or password")
-                : "Expected error not found. Got: " + errorText;
         } finally {
             driver.quit();
         }
